@@ -1,4 +1,4 @@
-# runescape-text-bot
+# runescape-text-discord
 Generates a gif of text based on runescape chatbox effects
 
 The Discord bot will parse messages in all channels it is in, and upload a gif of the runescape text in response to the message. To invoke, use the same format as in game but prepend `rs:`:
