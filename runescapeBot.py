@@ -7,7 +7,7 @@ import logging
 from threading import Timer, Thread
 from collections import deque
 from urllib.request import HTTPError
-import runescape
+import runescape_text as runescape
 import tempfile
 
 client = discord.Client()
