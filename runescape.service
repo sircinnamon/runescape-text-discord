@@ -1,0 +1,18 @@
+[Unit]
+Description=RunescapeBot Container
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker stop runescape
+ExecStartPre=-/usr/bin/docker rm runescape
+ExecStart=/usr/bin/docker run --name runescape \
+	-v /etc/RunescapeBot/.keyfile:/runescape/.keyfile \
+	-v /etc/localtime:/etc/localtime:ro \
+	-v /var/log/RunescapeBot:/runescape/logs \
+	runescapebot:latest
+
+[Install]
+WantedBy=multi-user.target

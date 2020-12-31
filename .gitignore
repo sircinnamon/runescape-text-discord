@@ -3,3 +3,4 @@ logs
 .keyfile
 *.gif
 runescape/*
+sftp-config.json
