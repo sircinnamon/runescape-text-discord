@@ -31,7 +31,7 @@ Modifiers:
 	Animations:
 		scroll
 		slide
-		wave
+		wave (:wave: is an emoji so try :wave1:)
 		wave2
 		shake
 """
@@ -52,6 +52,7 @@ async def on_ready():
 async def runescapify(ctx):
 	content = ctx.message.clean_content
 	content = content.replace(CMD_PREFIX+" ","",1)
+	content = content.replace("wave1:", "wave:") # Custom override to avoid emoji
 	img = runescape.parse_string(content)
 	filename = ""
 	fileobj = None
