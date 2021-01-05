@@ -7,12 +7,14 @@ import os
 import logging
 import runescape_text as runescape
 import tempfile
+import re
 
 CMD_PREFIX = "rs:"
 BOT_DESCRIPTION = """How to use:
 
 Prefix your message with "rs:" followed by any of the normal modifiers in runescape! I'll send you back an image showing the chat message.
 
+Flags can be prefixed with "_" to prevent becoming emojis. E.g. rs:_scroll:glow1:Text
 Only one colour and one animation will be applied, obviously.
 Modifiers:
 	Colours:
@@ -31,7 +33,7 @@ Modifiers:
 	Animations:
 		scroll
 		slide
-		wave (:wave: is an emoji so try :wave1:)
+		wave (alternately wave1)
 		wave2
 		shake
 """
@@ -51,8 +53,10 @@ async def on_ready():
 @client.command(hidden=True, aliases=[""])
 async def runescapify(ctx):
 	content = ctx.message.clean_content
-	content = content.replace(CMD_PREFIX+" ","",1)
-	content = content.replace("wave1:", "wave:") # Custom override to avoid emoji
+	content = content.replace(CMD_PREFIX+" ",CMD_PREFIX,1) # Remove space between prefix and flags
+	content = content.replace(":wave1:", ":wave:") # Allow alt flag name
+	content = re.sub(r":_(.+):", r":\1:", content) # Allow escaped flags
+	content = content.replace(CMD_PREFIX,"",1) # Remove prefix
 	img = runescape.parse_string(content)
 	filename = ""
 	fileobj = None
