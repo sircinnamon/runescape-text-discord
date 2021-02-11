@@ -52,14 +52,23 @@ async def on_ready():
 
 @client.command(hidden=True, aliases=[""])
 async def runescapify(ctx):
+	reply_content = ""
+	filename = ""
+	fileobj = None
+
 	content = ctx.message.clean_content
 	content = content.replace(CMD_PREFIX+" ",CMD_PREFIX,1) # Remove space between prefix and flags
 	content = content.replace(":wave1:", ":wave:") # Allow alt flag name
 	content = re.sub(r":_(.+):", r":\1:", content) # Allow escaped flags
+
+	if(":del:" in content): # Parse bot flags
+		reply_content="<@{}>:".format(ctx.author.id)
+		await ctx.message.delete()
+		content = content.replace(":del:", ":")
+
 	content = content.replace(CMD_PREFIX,"",1) # Remove prefix
+
 	img = runescape.parse_string(content)
-	filename = ""
-	fileobj = None
 	if(len(img)==1):
 		fileobj = tempfile.NamedTemporaryFile(suffix=".png",prefix="runescape-")
 		filename = fileobj.name
@@ -73,7 +82,7 @@ async def runescapify(ctx):
 		runescape.multi_frame_save(img, file=fileobj.file)
 		fileobj.file.flush()
 	fileobj.file.seek(0)
-	await ctx.send(file=discord.File(fileobj.file, filename=filename))
+	await ctx.send(content=reply_content, file=discord.File(fileobj.file, filename=filename))
 
 @client.event
 async def on_message(msg):
