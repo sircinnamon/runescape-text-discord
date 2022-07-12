@@ -17,4 +17,5 @@ docker run \
 	-v $(pwd)/logs:/runescape/logs \
 	-v $(pwd)/.keyfile:/runescape/.keyfile \
 	-v /etc/localtime:/etc/localtime:ro \
+	-v $(pwd)/runescapeBot.py:/runescape/runescapeBot.py \
 	runescapebot:pycord-test

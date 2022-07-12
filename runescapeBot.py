@@ -37,7 +37,9 @@ Modifiers:
 		wave2
 		shake
 """
-client = Bot(CMD_PREFIX, description=BOT_DESCRIPTION)
+intents = discord.Intents.default()
+intents.message_content = True # Possible deprecation soon
+client = Bot(command_prefix=CMD_PREFIX, description=BOT_DESCRIPTION, intents=intents)
 
 @client.listen('on_ready')
 async def on_ready():
