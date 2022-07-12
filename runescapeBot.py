@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, Cooldown, CooldownMapping
 import asyncio
 import json
 import os
@@ -13,6 +13,7 @@ CMD_PREFIX = "rs:"
 BOT_DESCRIPTION = """How to use:
 
 Prefix your message with "rs:" followed by any of the normal modifiers in runescape! I'll send you back an image showing the chat message.
+You can also use /rs in place of the prefix! E.g. /rs scroll:glow1:Like this!
 
 Flags can be prefixed with "_" to prevent becoming emojis. E.g. rs:_scroll:glow1:Text
 Only one colour and one animation will be applied, obviously.
@@ -86,14 +87,14 @@ async def runescapify(ctx):
 	fileobj.file.seek(0)
 	await ctx.send(content=reply_content, file=discord.File(fileobj.file, filename=filename))
 
-@client.slash_command(name="rs")
-async def slash_runescapify(ctx, message: str = None):
+@client.slash_command(name="rs", cooldown=CooldownMapping(Cooldown(1,5), commands.BucketType.user), description="Style your text like a runescape chat message!")
+async def slash_runescapify(ctx, msg: discord.Option(str, "Your runescape-format chat message", required=True)):
 	reply_content = ""
 	filename = ""
 	fileobj = None
 
-	content = message
-	content = content.replace(":wave1:", ":wave:") # Allow alt flag name
+	content = msg
+	content = content.replace("wave1:", "wave:") # Allow alt flag name
 	content = re.sub(r":_(.+):", r":\1:", content) # Allow escaped flags
 	img = runescape.parse_string(content)
 	if(len(img)==1):
@@ -124,6 +125,13 @@ async def on_message(msg):
 
 	await(client.process_commands(msg))
 		# await runescapify(ctx)
+
+@client.event
+async def on_application_command_error(ctx: discord.ApplicationContext, error: discord.DiscordException):
+	if isinstance(error, commands.CommandOnCooldown):
+		await ctx.respond("This command is currently on cooldown.")
+	else:
+		raise error  # Raise other errors so they aren't ignored
 
 
 keys = {
