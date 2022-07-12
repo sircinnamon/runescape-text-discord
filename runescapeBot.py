@@ -86,6 +86,31 @@ async def runescapify(ctx):
 	fileobj.file.seek(0)
 	await ctx.send(content=reply_content, file=discord.File(fileobj.file, filename=filename))
 
+@client.slash_command(name="rs")
+async def slash_runescapify(ctx, message: str = None):
+	reply_content = ""
+	filename = ""
+	fileobj = None
+
+	content = message
+	content = content.replace(":wave1:", ":wave:") # Allow alt flag name
+	content = re.sub(r":_(.+):", r":\1:", content) # Allow escaped flags
+	img = runescape.parse_string(content)
+	if(len(img)==1):
+		fileobj = tempfile.NamedTemporaryFile(suffix=".png",prefix="runescape-")
+		filename = fileobj.name
+		logging.info("Saving png for {} at {}".format(ctx.interaction.id, filename))
+		runescape.single_frame_save(img[0], file=fileobj.file)
+		fileobj.file.flush()
+	else:
+		fileobj = tempfile.NamedTemporaryFile(suffix=".gif",prefix="runescape-")
+		filename = fileobj.name
+		logging.info("Saving gif for {} at {}".format(ctx.interaction.id, filename))
+		runescape.multi_frame_save(img, file=fileobj.file)
+		fileobj.file.flush()
+	fileobj.file.seek(0)
+	await ctx.respond(content=reply_content, file=discord.File(fileobj.file, filename=filename))
+
 @client.event
 async def on_message(msg):
 	if msg.content.startswith("{}{}".format(CMD_PREFIX, "help")):
