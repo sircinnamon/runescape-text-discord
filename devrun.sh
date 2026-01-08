@@ -9,8 +9,7 @@ if [ ! -e ".keyfile" ]; then
 	exit 1
 fi
 
-docker stop runescape-dev
-docker rm runescape-dev
+docker rm -f runescape-dev
 docker run \
 	-d \
 	--name runescape-dev \
@@ -18,4 +17,4 @@ docker run \
 	-v $(pwd)/.keyfile:/runescape/.keyfile \
 	-v /etc/localtime:/etc/localtime:ro \
 	-v $(pwd)/runescapeBot.py:/runescape/runescapeBot.py \
-	runescapebot:pycord-test
+	runescapebot:dev

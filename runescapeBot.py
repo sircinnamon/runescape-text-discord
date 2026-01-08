@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Bot, Cooldown, CooldownMapping
+from discord.commands import option
 import asyncio
 import json
 import os
@@ -53,64 +54,45 @@ async def on_ready():
 	logging.info("Logged in successfully")
 	await client.change_presence(activity=discord.Game(name='Runescape'))
 
-@client.command(hidden=True, aliases=[""])
-async def runescapify(ctx):
-	reply_content = ""
+
+@client.command(hidden=True, aliases=[""], rest_is_raw=True) # Raw Message mode
+async def runescapify(ctx, *args):
+	(filename, fileobj) = generate_rs_text(" ".join(args), ctx.message.id)
+	await ctx.send(content="", file=discord.File(fileobj.file, filename=filename))
+
+@client.slash_command(
+	name="rs",
+	cooldown=CooldownMapping(Cooldown(1,5), commands.BucketType.user),
+	description="Style your text like a runescape chat message!",
+	integration_types={discord.IntegrationType.user_install, discord.IntegrationType.guild_install},
+	contexts={discord.InteractionContextType.guild, discord.InteractionContextType.private_channel}
+)
+@option('msg', description="Your runescape-format chat message", input_type=str, required=True)
+async def slash_runescapify(ctx, msg):
+	(filename, fileobj) = generate_rs_text(msg, ctx.interaction.id)
+	await ctx.respond(content="", file=discord.File(fileobj.file, filename=filename))
+
+def generate_rs_text(content, _id):
 	filename = ""
 	fileobj = None
 
-	content = ctx.message.clean_content
-	content = content.replace(CMD_PREFIX+" ",CMD_PREFIX,1) # Remove space between prefix and flags
-	content = content.replace(":wave1:", ":wave:") # Allow alt flag name
-	content = re.sub(r":_(.+):", r":\1:", content) # Allow escaped flags
-
-	if(":del:" in content): # Parse bot flags
-		reply_content="<@{}>:".format(ctx.author.id)
-		await ctx.message.delete()
-		content = content.replace(":del:", ":")
-
-	content = content.replace(CMD_PREFIX,"",1) # Remove prefix
-
-	img = runescape.parse_string(content)
-	if(len(img)==1):
-		fileobj = tempfile.NamedTemporaryFile(suffix=".png",prefix="runescape-")
-		filename = fileobj.name
-		logging.info("Saving png for {} at {}".format(ctx.message.id, filename))
-		runescape.single_frame_save(img[0], file=fileobj.file)
-		fileobj.file.flush()
-	else:
-		fileobj = tempfile.NamedTemporaryFile(suffix=".gif",prefix="runescape-")
-		filename = fileobj.name
-		logging.info("Saving gif for {} at {}".format(ctx.message.id, filename))
-		runescape.multi_frame_save(img, file=fileobj.file)
-		fileobj.file.flush()
-	fileobj.file.seek(0)
-	await ctx.send(content=reply_content, file=discord.File(fileobj.file, filename=filename))
-
-@client.slash_command(name="rs", cooldown=CooldownMapping(Cooldown(1,5), commands.BucketType.user), description="Style your text like a runescape chat message!")
-async def slash_runescapify(ctx, msg: discord.Option(str, "Your runescape-format chat message", required=True)):
-	reply_content = ""
-	filename = ""
-	fileobj = None
-
-	content = msg
 	content = content.replace("wave1:", "wave:") # Allow alt flag name
 	content = re.sub(r":_(.+):", r":\1:", content) # Allow escaped flags
 	img = runescape.parse_string(content)
 	if(len(img)==1):
 		fileobj = tempfile.NamedTemporaryFile(suffix=".png",prefix="runescape-")
 		filename = fileobj.name
-		logging.info("Saving png for {} at {}".format(ctx.interaction.id, filename))
+		logging.info("Saving png for {} at {}".format(_id, filename))
 		runescape.single_frame_save(img[0], file=fileobj.file)
 		fileobj.file.flush()
 	else:
 		fileobj = tempfile.NamedTemporaryFile(suffix=".gif",prefix="runescape-")
 		filename = fileobj.name
-		logging.info("Saving gif for {} at {}".format(ctx.interaction.id, filename))
+		logging.info("Saving gif for {} at {}".format(_id, filename))
 		runescape.multi_frame_save(img, file=fileobj.file)
 		fileobj.file.flush()
 	fileobj.file.seek(0)
-	await ctx.respond(content=reply_content, file=discord.File(fileobj.file, filename=filename))
+	return (filename, fileobj)
 
 @client.event
 async def on_message(msg):
@@ -132,7 +114,6 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error: d
 		await ctx.respond("This command is currently on cooldown.")
 	else:
 		raise error  # Raise other errors so they aren't ignored
-
 
 keys = {
 	"discord_token": None
